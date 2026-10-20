@@ -1,0 +1,50 @@
+{
+  "brand": {
+    "name": "CALIBRATE",
+    "tagline": "Precision alignment for every job description.",
+    "aesthetic": "Strict Flat Minimalist Monochrome + Champagne Gold",
+    "fonts": {
+      "initial": "Bugenvil",
+      "body": "Qaveria",
+      "telemetry": "JetBrains Mono"
+    },
+    "colors": {
+      "dark": {
+        "canvas": "#000000",
+        "card": "#121212",
+        "border": "#262626",
+        "text": "#FFFFFF",
+        "muted": "#A3A3A3",
+        "accent": "#EA580C"
+      },
+      "light": {
+        "canvas": "#FFFFFF",
+        "card": "#FFFFFF",
+        "border": "#E5E5E5",
+        "text": "#000000",
+        "muted": "#737373",
+        "accent": "#EA580C"
+      }
+    },
+    "assets": {
+      "vector": {
+        "symbol_mark_light": "calibrate-symbol-mark-light.svg",
+        "symbol_mark_dark": "calibrate-symbol-mark-dark.svg",
+        "wordmark_light": "calibrate-wordmark-light.svg",
+        "wordmark_dark": "calibrate-wordmark-dark.svg",
+        "hero_banner_light": "calibrate-hero-banner-light.svg",
+        "hero_banner_dark": "calibrate-hero-banner.svg",
+        "app_icon_light": "calibrate-app-icon-512.svg",
+        "app_icon_dark": "calibrate-app-icon.svg",
+        "app_icon_192_light": "calibrate-app-icon-192.svg",
+        "app_icon_192_dark": "calibrate-app-icon-192-dark.svg",
+        "apple_touch_icon_light": "calibrate-apple-touch-icon.svg",
+        "apple_touch_icon_dark": "calibrate-apple-touch-icon-dark.svg",
+        "favicon_32_light": "calibrate-favicon-32.svg",
+        "favicon_32_dark": "calibrate-favicon-32-dark.svg",
+        "favicon_16_light": "calibrate-favicon-16.svg",
+        "favicon_16_dark": "calibrate-favicon-16-dark.svg"
+      }
+    }
+  }
+}
