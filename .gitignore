@@ -1,0 +1,32 @@
+# Environment variables
+.env
+
+# Storage files (uploads & logs)
+storage/uploads/*
+!storage/uploads/.gitkeep
+storage/logs/*
+!storage/logs/.gitkeep
+
+# Python virtual environment & cache
+engine/venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.pytest_cache/
+.coverage
+htmlcov/
+
+# Editor and IDE metadata
+.vscode/
+.idea/
+
+# Benchmark evaluation outputs
+tests/step_e_live_evaluation_results.json
+
+# OS and temporary artifacts
+.DS_Store
+Thumbs.db
+desktop.ini
+*.tmp
+*.bak
+
