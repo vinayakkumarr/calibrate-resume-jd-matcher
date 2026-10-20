@@ -1,0 +1,53 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 958 >>
+stream
+BT
+/F1 12 Tf
+72 720 Td
+(Alex Rivera - Senior Software Engineer) Tj
+0 -18 Td
+(Professional Summary: Senior Backend Developer with 5 years of professional experience in software engineering.) Tj
+0 -18 Td
+(Core Competencies: Python, FastAPI, MySQL, Redis, Docker, Kubernetes, AWS, Git, CI/CD pipelines.) Tj
+0 -18 Td
+(Experience: Lead Backend Engineer at CloudScale Solutions from 2021 to 2026.) Tj
+0 -18 Td
+(Architected and deployed 15 microservices using Python and FastAPI, handling 10 million daily requests.) Tj
+0 -18 Td
+(Optimized MySQL relational database indexing and query plans, reducing p95 latency from 450ms to 85ms.) Tj
+0 -18 Td
+(Containerized core infrastructure with Docker and orchestrated deployment clusters on AWS Kubernetes.) Tj
+0 -18 Td
+(Integrated Redis caching layer for session management and rate limiting across distributed APIs.) Tj
+0 -18 Td
+(Education: Bachelor of Science in Computer Science, University of Technology, 2021.) Tj
+ET
+
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000241 00000 n 
+0000001250 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+1320
+%%EOF
