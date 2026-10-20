@@ -1,0 +1,669 @@
+/* ==========================================================================
+   JD Analyser — Core Application Stylesheet
+   Design tokens, typography, input controls, diff highlights, and layout.
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('../brand/calibrate-tokens.css');
+
+:root {
+  /* Surface and canvas colors */
+  --surface-canvas:      #FAF9F6;
+  --surface-card:        #FFFFFF;
+  --surface-subtle:      #F5F4F0;
+  --surface-muted:       #EFECE6;
+  
+  /* Border colors */
+  --border-hairline:     #E8E6DF;
+  --border-strong:       #D4D0C5;
+
+  /* Typography ink tokens */
+  --ink-primary:         #1C1917; /* Stone 900 */
+  --ink-secondary:       #44403C; /* Stone 700 */
+  --ink-muted:           #78716C; /* Stone 500 */
+  --ink-subtle:          #A8A29E; /* Stone 400 */
+
+  /* Redline and diff token highlights */
+  --diff-add-bg:         #E8F5E9;
+  --diff-add-text:       #1B5E20;
+  --diff-add-border:     #C8E6C9;
+
+  --diff-del-bg:         #FBE9E7;
+  --diff-del-text:       #BF360C;
+  --diff-del-border:     #FFCCBC;
+
+  /* Focus ring and selection tokens */
+  --focus-ring:          #2563EB;
+  --focus-ring-halo:     rgba(37, 99, 235, 0.16);
+  --selection-bg:        #2563EB;
+  --selection-text:      #FFFFFF;
+  --caret-color:         #2563EB;
+
+  /* Primary brand accent */
+  --accent-mandarin:      #EA580C;
+  --accent-mandarin-dark: #C2410C;
+  --accent-mandarin-soft: rgba(234, 88, 12, 0.12);
+
+  /* Secondary brand accent */
+  --accent-dusty-rose:    #9E4F60;
+}
+
+.text-dusty-rose {
+  color: var(--accent-dusty-rose);
+}
+
+/* Text selection highlights */
+::selection,
+*::selection {
+  background-color: #2563EB !important;
+  color: #FFFFFF !important;
+}
+
+::-moz-selection,
+*::-moz-selection {
+  background-color: #2563EB !important;
+  color: #FFFFFF !important;
+}
+
+input::selection,
+textarea::selection {
+  background-color: #2563EB !important;
+  color: #FFFFFF !important;
+}
+
+input::-moz-selection,
+textarea::-moz-selection {
+  background-color: #2563EB !important;
+  color: #FFFFFF !important;
+}
+
+/* Selection within dark surfaces */
+.btn-executive::selection,
+.btn-executive *::selection,
+[class*="bg-stone-900"]::selection,
+[class*="bg-stone-900"] *::selection {
+  background-color: #3B82F6 !important;
+  color: #FFFFFF !important;
+}
+
+body {
+  background-color: var(--surface-canvas);
+  color: var(--ink-primary);
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.font-serif {
+  font-family: 'Newsreader', Georgia, Cambria, 'Times New Roman', serif;
+  font-feature-settings: "cv01", "cv02", "liga", "kern";
+}
+
+.font-mono {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+}
+
+/* Graph grid pattern with radial vignette */
+.paper-canvas {
+  background-color: #FAF9F6;
+  background-image: 
+    radial-gradient(ellipse at 50% 25%, transparent 25%, rgba(250, 249, 246, 0.88) 85%),
+    linear-gradient(to right, rgba(28, 25, 23, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(28, 25, 23, 0.05) 1px, transparent 1px);
+  background-size: 100% 100%, 36px 36px, 36px 36px;
+  background-position: center top, center top, center top;
+}
+
+/* Card container styles */
+.stationery-card {
+  background: #FFFFFF;
+  border: 1px solid var(--border-hairline);
+  box-shadow: 
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.95), 
+    0 1px 3px rgba(28, 25, 23, 0.04), 
+    0 8px 24px -4px rgba(28, 25, 23, 0.02);
+}
+
+.stationery-card-lift {
+  background: #FFFFFF;
+  border: 1px solid var(--border-hairline);
+  box-shadow: 
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.95),
+    0 1px 3px 0 rgba(28, 25, 23, 0.04),
+    0 10px 24px -6px rgba(28, 25, 23, 0.05),
+    0 4px 8px -2px rgba(28, 25, 23, 0.02);
+}
+
+/* Hero Ingestion Workstation Panes (Twin Desk Blotters) */
+.stationery-workstation {
+  background: #FFFFFF;
+  border: 1px solid var(--border-hairline);
+  box-shadow: 
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.95),
+    0 1px 3px 0 rgba(28, 25, 23, 0.04),
+    0 14px 34px -10px rgba(28, 25, 23, 0.06),
+    0 4px 12px -2px rgba(28, 25, 23, 0.025);
+  transition: box-shadow 0.2s ease-out, border-color 0.2s ease-out;
+}
+
+/* Staged Document Card Lift (Physical Sheet Layer) */
+.stationery-staged-document {
+  background: #FFFFFF;
+  border: 1px solid var(--border-hairline);
+  box-shadow: 
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.95),
+    0 1px 3px 0 rgba(28, 25, 23, 0.04),
+    0 6px 18px -3px rgba(28, 25, 23, 0.04);
+}
+
+.stationery-card-interactive {
+  transition: border-color 0.15s ease-out;
+}
+
+.stationery-card-interactive:hover {
+  border-color: var(--border-strong);
+}
+
+/* Drag and drop zone styles with recessed stationery well */
+.dropzone-canvas {
+  box-shadow: inset 0 2px 4px 0 rgba(28, 25, 23, 0.035);
+  transition: border-color 0.15s ease-out, background-color 0.15s ease-out, box-shadow 0.15s ease-out;
+}
+
+.dropzone-canvas:hover {
+  border-color: #C7C4BC;
+  box-shadow: inset 0 2px 4px 0 rgba(28, 25, 23, 0.05);
+}
+
+.dropzone-canvas.dropzone-dragover {
+  border-color: var(--focus-ring);
+  background-color: rgba(37, 99, 235, 0.04);
+  box-shadow: inset 0 2px 6px 0 rgba(37, 99, 235, 0.08);
+}
+
+/* Caret Color for Native Text Inputs */
+input,
+textarea {
+  caret-color: var(--caret-color);
+}
+
+/* Textarea focus transition with recessed stationery well */
+.textarea-canvas {
+  box-shadow: inset 0 2px 4px 0 rgba(28, 25, 23, 0.035);
+  transition: border-color 0.15s ease-out, background-color 0.15s ease-out, box-shadow 0.15s ease-out;
+  box-sizing: border-box;
+}
+
+textarea.textarea-canvas:focus {
+  background-color: #FFFFFF;
+  border-color: var(--focus-ring);
+  box-shadow: 
+    inset 0 1px 2px 0 rgba(28, 25, 23, 0.02),
+    0 0 0 3px var(--focus-ring-halo);
+}
+
+/* Disable transitions during manual resize to eliminate drag lag */
+textarea.textarea-canvas:active,
+textarea.resize-y:active {
+  transition: none !important;
+}
+
+/* Height adjustment animation transition */
+.box-adjust-smooth {
+  transition: height 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+/* Textarea resize handle */
+textarea.textarea-canvas::-webkit-resizer {
+  border-bottom: 2px solid #C7C4BC;
+  border-right: 2px solid #C7C4BC;
+}
+
+textarea.textarea-canvas:hover::-webkit-resizer {
+  border-bottom: 2px solid #78716C;
+  border-right: 2px solid #78716C;
+}
+
+/* Secondary button styles */
+.btn-executive {
+  user-select: none;
+  -webkit-user-select: none;
+  background-color: #1C1917;
+  color: #FAFAF9;
+  box-shadow: 
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.18), 
+    0 1px 2px 0 rgba(28, 25, 23, 0.08);
+  transition: background-color 0.12s ease-out;
+}
+
+.btn-executive:hover:not(:disabled) {
+  background-color: #292524;
+}
+
+.btn-executive:active:not(:disabled) {
+  background-color: #141210;
+}
+
+.btn-executive:disabled {
+  background-color: #E7E5E4;
+  color: #A8A29E;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+/* Primary action button */
+.btn-calibrate-primary {
+  user-select: none;
+  -webkit-user-select: none;
+  background-color: #EA580C;
+  color: #FFFFFF;
+  box-shadow: 
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.25), 
+    0 1px 2px 0 rgba(28, 25, 23, 0.04),
+    0 4px 14px -4px rgba(234, 88, 12, 0.20);
+  transition: background-color 0.18s cubic-bezier(0.16, 1, 0.3, 1), 
+              box-shadow 0.18s cubic-bezier(0.16, 1, 0.3, 1), 
+              transform 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-calibrate-primary:hover:not(:disabled) {
+  background-color: #F97316;
+  color: #FFFFFF;
+  box-shadow: 
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.36), 
+    0 2px 6px -1px rgba(28, 25, 23, 0.06),
+    0 8px 24px -4px rgba(234, 88, 12, 0.24);
+  transform: translateY(-0.5px);
+}
+
+.btn-calibrate-primary:active:not(:disabled) {
+  background-color: #DC4E06;
+  box-shadow: 
+    inset 0 1px 2px 0 rgba(0, 0, 0, 0.15), 
+    0 1px 3px 0 rgba(234, 88, 12, 0.15);
+  transform: translateY(0.5px);
+}
+
+.btn-calibrate-primary:disabled {
+  background-color: #E7E5E4;
+  color: #A8A29E;
+  box-shadow: none;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-calibrate-primary:disabled svg {
+  color: #A8A29E;
+  transform: none !important;
+}
+
+/* Disable transitions in results view */
+.results-view,
+.results-view * {
+  transition: none !important;
+}
+
+.results-view .btn-executive:hover,
+.results-view button:hover,
+.results-view a:hover,
+.results-view .stationery-card:hover,
+.results-view .stationery-card-interactive:hover,
+.results-view [class*="hover:"]:hover {
+  transform: none !important;
+  box-shadow: inherit !important;
+}
+
+/* Inline Redline Diffs */
+.diff-added {
+  background-color: var(--diff-add-bg);
+  color: var(--diff-add-text);
+  border: 1px solid var(--diff-add-border);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-weight: 500;
+  text-decoration: none;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9em;
+}
+
+.diff-removed {
+  background-color: var(--diff-del-bg);
+  color: var(--diff-del-text);
+  border: 1px solid var(--diff-del-border);
+  padding: 1px 6px;
+  border-radius: 4px;
+  text-decoration: line-through;
+  opacity: 0.8;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9em;
+}
+
+.diff-context {
+  color: inherit;
+}
+
+/* Accessible Focus Ring */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* Minimal Scrollbar & Global Smooth Scrolling */
+html {
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: #D6D3D1 transparent;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #D6D3D1;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #A8A29E;
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms;
+    animation-iteration-count: 1;
+    transition-duration: 0.01ms;
+    scroll-behavior: auto;
+  }
+}
+
+/* ==========================================================================
+   Header and Footer Accent Lines
+   ========================================================================== */
+
+.header-editorial {
+  background-color: rgba(250, 249, 246, 0.94);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border-bottom: 1px solid #E4E1D8;
+  box-shadow: 
+    0 1px 2px 0 rgba(28, 25, 23, 0.02),
+    0 8px 24px -4px rgba(28, 25, 23, 0.04),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.95);
+  position: relative;
+}
+
+.header-editorial::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 1.5px;
+  background: linear-gradient(
+    90deg, 
+    transparent 0%, 
+    rgba(234, 88, 12, 0.15) 15%, 
+    rgba(234, 88, 12, 0.70) 50%, 
+    rgba(234, 88, 12, 0.15) 85%, 
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+.footer-editorial {
+  position: relative;
+  background: linear-gradient(180deg, #FAF9F6 0%, #F3F0E8 100%);
+  border-top: 1px solid #E4E1D8;
+  box-shadow: 
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.95),
+    0 -8px 24px -6px rgba(28, 25, 23, 0.03);
+}
+
+.footer-editorial::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 0;
+  right: 0;
+  height: 1.5px;
+  background: linear-gradient(
+    90deg, 
+    transparent 0%, 
+    rgba(234, 88, 12, 0.15) 15%, 
+    rgba(234, 88, 12, 0.70) 50%, 
+    rgba(234, 88, 12, 0.15) 85%, 
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+/* ==========================================================================
+   Print Stylesheet — Clean, Paper-Ready Executive Report
+   ========================================================================== */
+
+@media print {
+  @page {
+    size: auto;
+    margin: 12mm 12mm 12mm 12mm;
+  }
+
+  /* Universal Print Reset — force continuous document block flow */
+  html, body {
+    background: #FFFFFF !important;
+    background-image: none !important;
+    color: #1C1917 !important;
+    font-size: 9.5pt !important;
+    line-height: 1.35 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    display: block !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Disable screen background textures */
+  .paper-canvas {
+    background: #FFFFFF !important;
+    background-image: none !important;
+  }
+
+  /* Hide screen chrome, canvas, navigation, footer, dialogs, and interactive widgets */
+  header,
+  header.header-editorial,
+  #gridCanvas,
+  footer,
+  footer.footer-editorial,
+  [role="dialog"],
+  .no-print,
+  .print\:hidden,
+  .print-hide,
+  [x-show="view === 'upload'"] {
+    display: none !important;
+  }
+
+  /* Show print-only header and footer */
+  .print-header,
+  .print-only,
+  .print\:flex {
+    display: flex !important;
+  }
+  .print-footer,
+  .print\:block {
+    display: block !important;
+  }
+
+  /* Workstation & Layout Container Reset — eliminate flexbox centering and viewport stretching */
+  main {
+    max-width: 100% !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    position: static !important;
+    overflow: visible !important;
+    display: block !important;
+    height: auto !important;
+    min-height: 0 !important;
+    justify-content: flex-start !important;
+  }
+
+  /* Reset vertical spacing between sections (override 32px space-y-8) */
+  .results-view {
+    display: block !important;
+    height: auto !important;
+  }
+
+  .results-view > :not([hidden]) ~ :not([hidden]),
+  .space-y-8 > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 10pt !important;
+  }
+
+  .space-y-4 > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 6pt !important;
+  }
+
+  /* Convert 2-column grid to continuous multi-page document flow */
+  .results-view .grid.lg\:grid-cols-2 {
+    display: block !important;
+    gap: 0 !important;
+    height: auto !important;
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+  }
+
+  .results-view .grid.lg\:grid-cols-2 > div {
+    display: block !important;
+    width: 100% !important;
+    margin-bottom: 14pt !important;
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+  }
+
+  /* Section Headings: Keep headers with their first child card */
+  .results-view h2 {
+    font-size: 18pt !important;
+    line-height: 1.2 !important;
+    margin-bottom: 3pt !important;
+    break-after: avoid !important;
+    page-break-after: avoid !important;
+  }
+
+  .results-view h3 {
+    font-size: 13pt !important;
+    line-height: 1.25 !important;
+    margin-top: 8pt !important;
+    margin-bottom: 2pt !important;
+    break-after: avoid !important;
+    page-break-after: avoid !important;
+  }
+
+  .results-view .pb-2 {
+    padding-bottom: 2pt !important;
+    break-after: avoid !important;
+    page-break-after: avoid !important;
+  }
+
+  /* Compact Card styling for paper: reduce 24px padding down to 8pt */
+  .stationery-card,
+  .stationery-card-lift,
+  .stationery-workstation,
+  .stationery-staged-document {
+    background: #FFFFFF !important;
+    border: 1px solid #D6D3D1 !important;
+    box-shadow: none !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    margin-bottom: 6pt !important;
+    padding: 8pt 10pt !important;
+    border-radius: 4px !important;
+  }
+
+  /* Compact inner card spacing */
+  .results-view .stationery-card > * + * {
+    margin-top: 4pt !important;
+  }
+
+  /* Compact quote and defense intel boxes */
+  .results-view .stationery-card .border-l-2 {
+    padding: 4pt 8pt !important;
+    margin-top: 4pt !important;
+  }
+
+  .results-view .stationery-card .bg-stone-50 {
+    padding: 4pt 8pt !important;
+    margin-top: 4pt !important;
+  }
+
+  /* Meter tracks and bars */
+  .bg-stone-100 {
+    background-color: #F5F5F4 !important;
+    border: 1px solid #E7E5E4 !important;
+  }
+
+  .bg-stone-900 {
+    background-color: #1C1917 !important;
+  }
+
+  /* Requirement and status badges */
+  .bg-emerald-50 {
+    background-color: #ECFDF5 !important;
+    color: #064E3B !important;
+    border: 1px solid #A7F3D0 !important;
+  }
+
+  .bg-amber-50 {
+    background-color: #FFFBEB !important;
+    color: #78350F !important;
+    border: 1px solid #FDE68A !important;
+  }
+
+  .bg-rose-50 {
+    background-color: #FFF1F2 !important;
+    color: #881337 !important;
+    border: 1px solid #FECDD3 !important;
+  }
+
+  /* Inline Word Diff Highlighting */
+  .diff-added {
+    background-color: #ECFDF5 !important;
+    color: #065F46 !important;
+    border: 1px solid #A7F3D0 !important;
+    font-weight: 600 !important;
+  }
+
+  /* Ensure text colors have high print legibility */
+  .text-stone-400 {
+    color: #78716C !important;
+  }
+
+  .text-stone-500 {
+    color: #57534E !important;
+  }
+
+  /* ONLY individual cards must avoid breaking internally; containers MUST break naturally */
+  .results-view .stationery-card {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .space-y-4,
+  .results-view {
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+  }
+}
+
