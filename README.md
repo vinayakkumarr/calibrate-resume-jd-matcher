@@ -7,17 +7,17 @@
 
 ## 1. Project Overview
 
-**Calibrate** (repository: `ResumeJD-Matcher`) is an automated, local-first engineering workbench designed to evaluate how closely a candidate's resume aligns with a technical job description.
+**Calibrate** (repository: `calibrate-resume-jd-matcher`) is an automated, local-first engineering workbench designed to evaluate how closely a candidate's resume aligns with a technical job description.
 
-Rather than relying on naive keyword searches or unstructured, ungrounded Large Language Model (LLM) summaries, Calibrate breaks down the job description into discrete, categorized criteria (Core Must-Haves, Preferred Bonus Skills, and Experience Tenure). It then cross-references each requirement against the candidate's actual resume text, verifies evidence using deterministic string and fuzzy matching, calculates reproducible mathematical alignment scores, and provides structured bullet-point rewrite suggestions anchored directly to candidate achievements.
+Rather than relying on naive keyword searches or unstructured, ungrounded summaries, Calibrate breaks down the job description into discrete, categorized criteria (Core Must-Haves, Preferred Bonus Skills, and Experience Tenure). It then cross-references each requirement against the candidate's actual resume text, verifies evidence using deterministic string and fuzzy matching, calculates reproducible mathematical alignment scores, and provides structured bullet-point rewrite suggestions anchored directly to candidate achievements.
 
 ### Core Architectural Pillars
 
 - **Deterministic Mathematical Scoring ($\sigma^2 = 0.00$):** Overall scores are computed through transparent mathematical formulas with non-linear gating thresholds. Given identical inputs, scoring produces zero variance across runs.
 - **Verbatim Evidence Anchoring:** Requirements marked `MATCHED` are backed by verbatim sentence citations extracted from the resume. An automated Grounding Verifier cross-checks quotes and rejects negative or aspirational statements.
-- **Asynchronous Decoupled Execution:** Upload validation and job tickets are processed through a fast PHP 8.2+ HTTP gateway, while compute-intensive text extraction, LLM interactions, and scoring run in a detached background Python worker.
-- **Content-Addressable Requirement Caching:** Job descriptions are decomposed into requirements and cached in MySQL using SHA-256 content hashes, avoiding duplicate LLM calls when evaluating multiple candidates against the same job posting.
-- **Metric Guard & Verification Gate:** AI-generated bullet rewrites that introduce quantified metrics (percentages, throughput, scale) lock the user interface clipboard copy button until the candidate inputs their actual verifiable numbers and checks a confirmation gate.
+- **Asynchronous Decoupled Execution:** Upload validation and job tickets are processed through a fast PHP 8.2+ HTTP gateway, while compute-intensive text extraction, semantic analysis, and scoring run in a detached background Python worker.
+- **Content-Addressable Requirement Caching:** Job descriptions are decomposed into requirements and cached in MySQL using SHA-256 content hashes, avoiding duplicate external processing calls when evaluating multiple candidates against the same job posting.
+- **Metric Guard & Verification Gate:** Suggested bullet rewrites that introduce quantified metrics (percentages, throughput, scale) lock the user interface clipboard copy button until the candidate inputs their actual verifiable numbers and checks a confirmation gate.
 - **Document Root Isolation:** The web server DocumentRoot is strictly restricted to `public/`. Application source code, database credentials (`.env`), worker execution logs, and uploaded candidate documents (`storage/`) reside strictly outside the publicly accessible HTTP path.
 - **Prompt Injection Defense:** Untrusted candidate resume text is isolated inside cryptographic nonces (`<CANDIDATE_RESUME_{nonce}>`) to prevent prompt hijacking from altering system instructions or schema contracts.
 
@@ -30,7 +30,7 @@ Rather than relying on naive keyword searches or unstructured, ungrounded Large 
 | **Requirement Decomposition** | Decomposes job postings into Core Must-Haves, Preferred Bonus Skills, and Experience Tenure across six standard technical domains. | **Implemented & Verified** |
 | **Verbatim Proof Verification** | Grounding verifier searches candidate text using RapidFuzz matching while enforcing negation guards (`never`, `no prior`, `lacks`) and aspirational guards (`eager to learn`, `planning to`). | **Implemented & Verified** |
 | **Deterministic Scoring** | Transparent weighted scoring with essential-skill deal-breaker rules (score throttled if must-haves < 50%; zeroed if must-haves = 0%). | **Implemented & Verified** |
-| **Experience Tenure Auditing** | Dynamic date range parser extracts candidate years and JD required tenure, masking company founding age to prevent false requirement extraction. | **Implemented & Verified** |
+| **Experience Tenure Auditing** | Dual-tenure calendar-month set-union parser evaluates technical experience vs. general workforce tenure, with safeguards for non-technical roles and pre-2000 dates. | **Implemented & Verified** |
 | **Bullet Re-Engineering** | Generates Google XYZ-style bullet upgrades (`Accomplished [X], as measured by [Y], by doing [Z]`) snapped to candidate original bullets. | **Implemented & Verified** |
 | **Word-Level Visual Redlines** | Interactive redline comparison rendering deletions (strikethrough) and additions (highlighted tokens) with full XSS escaping. | **Implemented & Verified** |
 | **Metric Guard Verification** | Dynamic lock card requiring candidate metric validation before unlocking clipboard copy operations for rewritten bullets. | **Implemented & Verified** |
@@ -89,7 +89,7 @@ sequenceDiagram
 
 ### Processing Lifecycle
 
-1. **Ingestion & Safety Guards:** The candidate resume (PDF, TXT, or pasted text) and job description (pasted text, TXT, or PDF) are received at [`/api/scan.php`](file:///C:/Users/vvina/Downloads/ResumeJD-Matcher/public/api/scan.php). The gateway enforces:
+1. **Ingestion & Safety Guards:** The candidate resume (PDF, TXT, or pasted text) and job description (pasted text, TXT, or PDF) are received at [`public/api/scan.php`](public/api/scan.php). The gateway enforces:
    - Magic-byte verification (`%PDF-` header check for uploaded PDF documents).
    - Character length bounds (80 to 25,000 characters for resumes; 80 to 15,000 characters for job descriptions).
    - Identical-input detection: rejects submissions where the candidate pasted the job description into both fields.
@@ -98,14 +98,14 @@ sequenceDiagram
 4. **Content-Addressable Requirement Caching:** The worker computes a SHA-256 hash of the normalized job description. If the requirements already exist in `jd_target_cache`, they are loaded instantly without making an LLM API call. If not cached, the worker requests structured requirement decomposition from Google Gemini and caches the result.
 5. **Auditing & Grounding Verification:** The candidate's qualifications are evaluated against each requirement. The Grounding Verifier scans the raw resume text using RapidFuzz token matching to confirm that citations marked as evidence actually exist in the resume, downgrading unsupported or hallucinated claims.
 6. **Deterministic Scoring:** The scorer calculates Must-Have coverage, Bonus Skill points, and Experience Tenure ratio. If Core Must-Have coverage falls below 50.0%, a non-linear gate multiplier throttles the overall score to prevent peripheral skills from inflating an unqualified profile.
-7. **Client Polling & Metric Guard:** The browser polls [`/api/status.php`](file:///C:/Users/vvina/Downloads/ResumeJD-Matcher/public/api/status.php) every 2 seconds using the `X-Client-Token` header. Once completed, Alpine.js renders the Unified Requirements Ledger, word-level visual diffs, and the interactive Metric Guard card.
+7. **Client Polling & Metric Guard:** The browser polls [`public/api/status.php`](public/api/status.php) every 2 seconds using the `X-Client-Token` header (with automatic 3-strike transient network retry). Once completed, Alpine.js renders the Unified Requirements Ledger, word-level visual diffs, and the interactive Metric Guard card.
 
 ---
 
 ## 4. Technology Stack & Architecture
 
 ```text
-ResumeJD-Matcher/
+calibrate-resume-jd-matcher/
 ├── public/                             # Document Root (Exclusively exposed via HTTP)
 │   ├── index.php                       # Single-page Alpine.js workbench interface
 │   ├── api/
@@ -140,7 +140,7 @@ ResumeJD-Matcher/
 | **Intelligence Core** | Python 3.10+, `pdfplumber`, `ftfy`, `RapidFuzz`, `pydantic` | Extracts layout-aware text from PDF resumes, normalizes typography, parses experience tenure dates, queries target cache, interacts with Gemini API, validates citations, and computes deterministic scores. |
 | **Relational Database** | MySQL 8.0+ / MariaDB 10.4+ | Stores scan tickets (`scans`), structured analysis results (`scan_results`), and content-addressable decomposed job requirements (`jd_target_cache`). |
 | **Frontend UI** | Alpine.js 3.x, Tailwind CSS, jsdiff | Reactive single-page application handling asynchronous status polling, word-level visual diff rendering, state preservation, error translation, and the interactive Metric Guard verification workflow. |
-| **External AI** | Google Gemini API (`google-genai` 2.31.0) | Decomposes job postings into structured requirements and audits candidate bullet points against requirements using Pydantic JSON schema enforcement. |
+| **Semantic Processing Engine** | Google Gemini API (`google-genai` 2.31.0) | Decomposes job postings into structured requirements and audits candidate bullet points against requirements using Pydantic JSON schema enforcement. |
 
 ---
 
@@ -155,6 +155,17 @@ Verify that your local system has the required runtimes installed:
 - **Python 3.10 or higher** (tested up to Python 3.14 on Windows AMD64).
 - **Node.js 18 or higher** (required for running browser logic unit tests).
 - **Google Gemini API Key** (free tier supported; obtain from Google AI Studio).
+
+---
+
+### Step 0: Clone the Repository
+
+Clone the repository and enter the project directory:
+
+```powershell
+git clone https://github.com/vinayakkumarr/calibrate-resume-jd-matcher.git
+cd calibrate-resume-jd-matcher
+```
 
 ---
 
@@ -269,7 +280,7 @@ All operational settings are managed through environment variables loaded from t
 | `DB_NAME` | `jd_analyser` | Yes | Target database schema name (must match `schema.sql`). |
 | `DB_USER` | `root` | Yes | Database username with `SELECT`, `INSERT`, `UPDATE`, `DELETE` privileges. |
 | `DB_PASS` | *(empty)* | Yes | Database password corresponding to `DB_USER`. |
-| `GEMINI_API_KEY` | *(none)* | **Yes (for AI)** | Google Gemini API key used for requirement extraction and bullet rewriting. |
+| `GEMINI_API_KEY` | *(none)* | **Yes (for semantic decomposition)** | Google Gemini API key used for requirement extraction and bullet rewriting. |
 | `GEMINI_MODEL` | `gemini-3.5-flash` | No | Primary Gemini model identifier used for analysis. Code fallback default: `gemini-3.5-flash-lite`. |
 | `GEMINI_FALLBACK_MODELS` | `gemini-2.5-flash,gemini-1.5-flash` | No | Comma-separated list of fallback models tried sequentially if primary model hits rate limits. |
 | `GEMINI_MAX_RETRIES` | `3` | No | Maximum retry attempts for transient external API errors (e.g., HTTP 429, 503). |
@@ -293,7 +304,7 @@ All operational settings are managed through environment variables loaded from t
 
 ## 7. Mathematical Scoring Methodology
 
-Calibrate does not ask the LLM to guess an arbitrary overall score. Instead, scoring is calculated purely in Python ([`engine/scorer.py`](file:///C:/Users/vvina/Downloads/ResumeJD-Matcher/engine/scorer.py)) from discrete, validated requirement outcomes.
+Calibrate does not ask the model to guess an arbitrary overall score. Instead, scoring is calculated purely in Python ([`engine/scorer.py`](engine/scorer.py)) from discrete, validated requirement outcomes.
 
 ### 1. Component Scores
 
@@ -427,10 +438,10 @@ To execute all primary test layers sequentially and display a unified quality sc
 #### Offline Unit & Logic Tests (Run without MySQL or Gemini credentials)
 
 ```powershell
-# Frontend State, Diff Renderer, & Metric Guard Logic (14 tests)
+# Frontend State, Diff Renderer, & Metric Guard Logic (16 tests)
 node tests\test_frontend_logic.js
 
-# Experience Date Parser & Tenure Normalization (6 tests)
+# Experience Date Parser & Dual-Tenure Normalization (13 tests)
 .\engine\venv\Scripts\python.exe tests\test_date_parser_regression.py
 
 # Identical Input Detection & Normalization Boundary (13 tests)
@@ -462,7 +473,7 @@ php tests\test_identical_input_validation.php
 php cron\cleanup.php --dry-run
 ```
 
-#### Ground-Truth Benchmarks & AI Gate 0
+#### Ground-Truth Benchmarks & Semantic Schema Gate 0
 
 ```powershell
 # Ground-Truth Accuracy Benchmark Harness
