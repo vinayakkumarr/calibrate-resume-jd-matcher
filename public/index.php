@@ -120,6 +120,30 @@ if (PHP_SAPI !== 'cli') {
 
       <!-- Ingestion Form -->
       <form @submit.prevent="submitScan" novalidate x-show="!loading" class="space-y-8">
+        
+        <!-- In-Flight Input Orientation Inversion Helper Pill -->
+        <div x-show="isSwappedDetected && !showSwapConfirmationModal" 
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 -translate-y-2"
+             x-transition:enter-end="opacity-100 translate-y-0"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="flex items-center justify-center -mb-3"
+             style="display: none;">
+          <div class="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-amber-50/95 border border-amber-200/80 text-stone-800 text-xs shadow-2xs">
+            <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+            <span><strong>Orientation Notice:</strong> Inputs appear to be reversed.</span>
+            <button type="button" @click="swapPanels()" 
+                    class="font-semibold text-amber-900 hover:text-stone-950 underline underline-offset-2 flex items-center gap-1 cursor-pointer transition-colors">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+              </svg>
+              <span>Swap Panels</span>
+            </button>
+          </div>
+        </div>
+
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-7 items-stretch">
           
           <!-- Pane 1: Candidate Resume -->
@@ -1141,6 +1165,101 @@ if (PHP_SAPI !== 'cli') {
                   class="btn-calibrate-primary text-xs font-medium py-2 px-4 rounded-lg cursor-pointer">
             Understood
           </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Document Orientation Confirmation Dialog -->
+    <div x-show="showSwapConfirmationModal"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto bg-stone-900/40 backdrop-blur-xs no-print print:hidden"
+         @keydown.escape.window="showSwapConfirmationModal = false"
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="orientation-dialog-title"
+         aria-describedby="orientation-dialog-desc"
+         style="display: none;">
+      
+      <!-- Backdrop Click to Close -->
+      <div class="fixed inset-0" @click="showSwapConfirmationModal = false" aria-hidden="true"></div>
+
+      <!-- Dialog Card -->
+      <div class="relative w-full max-w-lg bg-[#FAF9F6] border border-[#E8E6DF] rounded-2xl shadow-xl p-6 sm:p-7 space-y-5 text-left z-10"
+           @click.stop>
+        
+        <!-- Header -->
+        <div class="flex items-start justify-between gap-4 border-b border-[#E8E6DF] pb-4">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2">
+              <span class="w-6 h-6 rounded-full bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700 shrink-0">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                </svg>
+              </span>
+              <h2 id="orientation-dialog-title" class="font-serif text-lg font-medium text-stone-900 tracking-tight">
+                Review Document Orientation
+              </h2>
+            </div>
+            <p id="orientation-dialog-desc" class="text-xs text-stone-500">
+              Your inputs appear to be placed in reverse order.
+            </p>
+          </div>
+          <button type="button"
+                  @click="showSwapConfirmationModal = false"
+                  class="text-stone-400 hover:text-stone-700 p-1.5 rounded-lg hover:bg-stone-100 transition-colors focus:outline-none focus:ring-2 focus:ring-stone-400 cursor-pointer"
+                  aria-label="Close dialog">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Body / Comparison Card -->
+        <div class="space-y-3.5 text-xs text-stone-700 leading-relaxed">
+          <div class="bg-stone-50/70 border border-[#E8E6DF] p-3.5 rounded-xl space-y-2">
+            <div class="flex items-start gap-2">
+              <span class="px-1.5 py-0.5 rounded bg-amber-100/70 text-amber-900 font-mono text-[10px] uppercase font-semibold shrink-0">Left Box</span>
+              <span class="text-stone-600">The <strong>Resume</strong> field contains employer requisition phrasing (e.g., responsibilities, requirements, qualifications).</span>
+            </div>
+            <div class="flex items-start gap-2 pt-2 border-t border-stone-200/60">
+              <span class="px-1.5 py-0.5 rounded bg-emerald-100/70 text-emerald-900 font-mono text-[10px] uppercase font-semibold shrink-0">Right Box</span>
+              <span class="text-stone-600">The <strong>Job Description</strong> field contains candidate work chronology and contact credentials.</span>
+            </div>
+          </div>
+          <p class="text-[11.5px] text-stone-500">
+            For accurate qualification alignment and Google XYZ achievements, the Resume field should contain your candidate background and the Job Description field should contain the target job posting.
+          </p>
+        </div>
+
+        <!-- Actions -->
+        <div class="pt-4 border-t border-[#E8E6DF] flex flex-wrap items-center justify-between gap-3">
+          <button type="button"
+                  @click="proceedWithoutSwap()"
+                  class="text-xs text-stone-500 hover:text-stone-900 underline underline-offset-2 py-2 cursor-pointer transition-colors">
+            Calibrate As-Is
+          </button>
+
+          <div class="flex items-center gap-2">
+            <button type="button"
+                    @click="showSwapConfirmationModal = false"
+                    class="text-xs font-medium py-2 px-3.5 rounded-lg border border-stone-200 text-stone-700 hover:bg-stone-100 transition-colors cursor-pointer">
+              Review Inputs
+            </button>
+            <button type="button"
+                    @click="confirmSwapAndSubmit()"
+                    class="btn-calibrate-primary text-xs font-medium py-2 px-4 rounded-lg flex items-center gap-1.5 cursor-pointer shadow-xs">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+              </svg>
+              <span>Swap &amp; Calibrate</span>
+            </button>
+          </div>
         </div>
 
       </div>

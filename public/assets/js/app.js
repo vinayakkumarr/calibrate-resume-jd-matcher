@@ -62,6 +62,10 @@ function translateErrorMessage(rawError) {
     return 'The AI intelligence service is currently experiencing peak capacity or temporary rate limits. Your inputs have been preserved—please try again in a few moments.';
   }
 
+  if (lower.includes('appear to be swapped') || lower.includes('inputs_swapped') || lower.includes('reversed')) {
+    return 'The Resume and Job Description inputs appear to be swapped. Please review and swap the inputs before continuing.';
+  }
+
   return rawError;
 }
 
@@ -83,6 +87,8 @@ function analyserApp() {
     filterTab: 'all', // 'all' | 'matched' | 'weak' | 'missing'
     selectedDomain: 'all', // 'all' | specific technical domain
     showPrivacyNotice: false,
+    showSwapConfirmationModal: false,
+    forceOrientationOverride: false,
 
     // Verbatim Layout Extraction Inspector State
     resumeExtractedText: '',
@@ -479,7 +485,183 @@ function analyserApp() {
       return false;
     },
 
-    async submitScan() {
+    evaluateDocumentOrientation(text) {
+      text = String(text || '').trim();
+      if (text.length < 50) {
+        return { resumeScore: 0.0, jdScore: 0.0, reasons: [] };
+      }
+
+      let resumeScore = 0.0;
+      let jdScore = 0.0;
+      const reasons = [];
+
+      // Dimension 1: PII & Contact Identity Vector vs Corporate Requisition Channels
+      if (/[a-zA-Z0-9._%+-]+@(?!careers\.|jobs\.|hr\.|talent\.|info\.|support\.|contact\.|admin\.|recruiting\.)[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b/i.test(text)) {
+        resumeScore += 2.5;
+        reasons.push('personal_email');
+      }
+      if (/(?:\+?\d{1,3}[-.\s]?)?(?:\(?\d{3}\)?[-.\s]?)?\d{3}[-.\s]?\d{4}\b/.test(text)) {
+        resumeScore += 2.0;
+        reasons.push('phone_number');
+      }
+      if (/(?:linkedin\.com\/in\/|github\.com\/[a-zA-Z0-9_-]+)/i.test(text)) {
+        resumeScore += 2.5;
+        reasons.push('personal_profile_url');
+      }
+      if (/(?:greenhouse\.io|lever\.co|workday\.com|myworkdayjobs|careers\.|jobs\.)/i.test(text) ||
+          /(?:jobs|careers|hr|talent|recruiting)@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b/i.test(text)) {
+        jdScore += 2.5;
+        reasons.push('corporate_hiring_channel');
+      }
+
+      // Dimension 2: Chronological Career Trajectory vs Role Constraints
+      const dateSpanMatches = (text.match(/\b(?:19\d\d|20\d\d)\s*(?:–|-|to)\s*(?:19\d\d|20\d\d|present|current)\b/gi) || []).length;
+      if (dateSpanMatches >= 2) {
+        resumeScore += 3.5;
+        reasons.push('multi_span_employment_chronology');
+      } else if (dateSpanMatches === 1) {
+        resumeScore += 1.5;
+        reasons.push('employment_date_span');
+      }
+
+      if (/\b(?:B\.?S\.?|B\.?Tech|B\.?E\.?|M\.?S\.?|M\.?Tech|MCA|BCA|Ph\.?D\.?|Bachelor of|Master of)\s+(?:in|of)\s+[A-Za-z\s]{3,30}\b/i.test(text)) {
+        resumeScore += 2.0;
+        reasons.push('academic_degree_awarded');
+      }
+
+      if (/\b(?:\d{1,2}\+?|\d{1,2}\s*-\s*\d{1,2})\s*(?:years?|yrs?)(?:\s+of)?\s+(?:experience|exp|background|track record)\b/i.test(text) &&
+          /\b(?:required|preferred|must have|minimum|qualifications?|ideal candidate)\b/i.test(text)) {
+        jdScore += 2.5;
+        reasons.push('requisition_experience_requirement');
+      }
+
+      // Dimension 3: Pragmatic Voice & Grammatical Tense
+      const secondPersonMatches = (text.match(/\b(?:you will|what you(?:['’]ll| will) do|what you(?:['’]ll| will) bring|you are responsible for|we are looking for|we(?:['’]re| are) looking for|the ideal candidate|the role requires|as a [a-z\s]+, you will)\b/gi) || []).length;
+      if (secondPersonMatches >= 2) {
+        jdScore += 3.0;
+        reasons.push('employer_second_person_address');
+      } else if (secondPersonMatches === 1) {
+        jdScore += 1.5;
+        reasons.push('employer_address_marker');
+      }
+
+      if (/\b(?:requirements?|qualifications?|responsibilities?|what we(?:['’]re| are) looking for|what you(?:['’]ll| will) do|who you are|minimum qualifications?|preferred qualifications?|key responsibilities?|nice to have)\s*[:\n]/i.test(text)) {
+        jdScore += 2.5;
+        reasons.push('requisition_section_headers');
+      }
+
+      const pastTenseMatches = (text.match(/\b(?:spearheaded|architected|engineered|orchestrated|co-founded|reduced latency|increased throughput|improved performance by|built and deployed)\b/gi) || []).length;
+      if (pastTenseMatches >= 2) {
+        resumeScore += 2.5;
+        reasons.push('past_tense_accomplishment_verbs');
+      } else if (pastTenseMatches === 1) {
+        resumeScore += 1.0;
+        reasons.push('accomplishment_verb');
+      }
+
+      if (/\b(?:work experience|professional experience|employment history|projects?|education|technical skills?|certifications?|awards?)\s*[:\n]/i.test(text)) {
+        resumeScore += 2.0;
+        reasons.push('resume_section_headers');
+      }
+
+      // Dimension 4: Institutional Requisition Boilerplate
+      if (/\b(?:equal opportunity employer|affirmative action|\beoe\b|visa sponsorship|401\s*\(k\)|health insurance|dental and vision|paid time off|\bpto\b|salary range|compensation:?\s*\$|job type:\s*(?:full-time|part-time|contract))\b/i.test(text)) {
+        jdScore += 3.5;
+        reasons.push('institutional_requisition_boilerplate');
+      }
+
+      return {
+        resumeScore: Math.round(resumeScore * 100) / 100,
+        jdScore: Math.round(jdScore * 100) / 100,
+        reasons
+      };
+    },
+
+    getEffectiveResumeText() {
+      if (this.resumeMode === 'file') {
+        return (this.resumeEditedText || this.resumeExtractedText || '').trim();
+      }
+      return this.resumeText.trim();
+    },
+
+    getEffectiveJdText() {
+      if (this.jdMode === 'file') {
+        return (this.jdEditedText || this.jdExtractedText || '').trim();
+      }
+      return this.jobDescription.trim();
+    },
+
+    get isSwappedDetected() {
+      const resumeContent = this.getEffectiveResumeText();
+      const jdContent = this.getEffectiveJdText();
+      if (!resumeContent || !jdContent || resumeContent.length < 50 || jdContent.length < 50) {
+        return false;
+      }
+      const resEval = this.evaluateDocumentOrientation(resumeContent);
+      const jdEval = this.evaluateDocumentOrientation(jdContent);
+
+      const resumeBoxNetJd = resEval.jdScore - resEval.resumeScore;
+      const jdBoxNetResume = jdEval.resumeScore - jdEval.jdScore;
+
+      const bothCrossRole = (resumeBoxNetJd >= 1.5) && (jdBoxNetResume >= 1.5);
+      const combinedDelta = resumeBoxNetJd + jdBoxNetResume;
+
+      return bothCrossRole && (combinedDelta >= 4.5);
+    },
+
+    swapPanels() {
+      // 1. Swap input modes
+      const prevResumeMode = this.resumeMode;
+      this.resumeMode = this.jdMode;
+      this.jdMode = prevResumeMode;
+
+      // 2. Swap text contents
+      const prevResumeText = this.resumeText;
+      this.resumeText = this.jobDescription;
+      this.jobDescription = prevResumeText;
+
+      // 3. Swap file objects
+      const prevFile = this.file;
+      this.file = this.jdFile;
+      this.jdFile = prevFile;
+
+      // 4. Swap extracted text & metadata
+      const prevResumeExtracted = this.resumeExtractedText;
+      const prevResumeEdited = this.resumeEditedText;
+      const prevResumeMeta = { ...this.resumeExtractionMeta };
+
+      this.resumeExtractedText = this.jdExtractedText;
+      this.resumeEditedText = this.jdEditedText;
+      this.resumeExtractionMeta = { ...this.jdExtractionMeta };
+
+      this.jdExtractedText = prevResumeExtracted;
+      this.jdEditedText = prevResumeEdited;
+      this.jdExtractionMeta = prevResumeMeta;
+
+      // 5. Dismiss modal and clear swap-related errors
+      this.showSwapConfirmationModal = false;
+      if (this.errorMessage && (this.errorMessage.toLowerCase().includes('swapped') || this.errorMessage.toLowerCase().includes('reversed'))) {
+        this.errorMessage = null;
+      }
+    },
+
+    confirmSwapAndSubmit() {
+      this.swapPanels();
+      this.forceOrientationOverride = false;
+      this.$nextTick(() => {
+        this.submitScan(false);
+      });
+    },
+
+    proceedWithoutSwap() {
+      this.showSwapConfirmationModal = false;
+      this.forceOrientationOverride = true;
+      this.$nextTick(() => {
+        this.submitScan(true);
+      });
+    },
+
+    async submitScan(forceOrientation = false) {
       try {
         // 1. Check if background extraction is in progress
         if (this.resumeExtractionLoading || this.jdExtractionLoading) {
@@ -530,6 +712,12 @@ function analyserApp() {
           return;
         }
 
+        // 3. Document Orientation Pre-Flight Check
+        if (!forceOrientation && !this.forceOrientationOverride && this.isSwappedDetected) {
+          this.showSwapConfirmationModal = true;
+          return;
+        }
+
         this.loading = true;
         this.errorMessage = null;
         this.progressPercent = 20;
@@ -566,6 +754,10 @@ function analyserApp() {
         }
         formData.append('client_token', this.getClientToken());
 
+        if (forceOrientation || this.forceOrientationOverride) {
+          formData.append('force_orientation', '1');
+        }
+
         const res = await fetch('api/scan.php', {
           method: 'POST',
           body: formData
@@ -579,6 +771,11 @@ function analyserApp() {
         }
 
         if (!res.ok) {
+          if (data.code === 'INPUTS_SWAPPED') {
+            this.showSwapConfirmationModal = true;
+            this.loading = false;
+            return;
+          }
           throw new Error(data.error || `Server rejected scan request (HTTP ${res.status}). Your inputs were preserved.`);
         }
 

@@ -706,6 +706,100 @@ assert.strictEqual(isPollingActive, false, 'Polling must gracefully abort after 
 
 console.log('  [PASS] 3-strike polling network resilience verified with seamless reconnect logic.');
 
+// -----------------------------------------------------------------------------
+// TEST 17: Verifying Orientation Inversion & Full-State Panel Swap
+// -----------------------------------------------------------------------------
+console.log('\n[TEST 17] Verifying Document Orientation & Full-State Panel Swap...');
+
+const sampleResumeText = `
+Alex Mercer
+alex.mercer@gmail.com | (555) 234-5678 | San Francisco, CA
+linkedin.com/in/alex-mercer | github.com/alexmercer
+
+PROFESSIONAL SUMMARY
+Senior Backend Engineer with 6+ years of experience architecting distributed cloud systems.
+
+WORK EXPERIENCE
+Senior Software Engineer | Stripe | 2021 – Present
+• Architected high-throughput payment settlement microservices handling 12,000 requests/sec.
+• Engineered distributed caching layer with Redis, reducing p99 latency by 35%.
+• Spearheaded migration from monolithic services to event-driven Kafka architecture.
+
+EDUCATION
+B.S. in Computer Science | University of California, Berkeley | 2014 – 2018
+`;
+
+const sampleJdText = `
+Senior Backend Engineer - Core Infrastructure
+Company: Veloce Systems | San Francisco, CA (Hybrid)
+Job Type: Full-time | Salary Range: $160,000 - $200,000
+
+About the Role:
+We are looking for a Senior Backend Engineer to join our Core Platform team. In this role, you will be responsible for designing, building, and maintaining high-scale distributed systems.
+
+What You'll Do:
+• Architect resilient microservices in Python or Go.
+• Build scalable data pipelines with Kafka and relational databases (PostgreSQL/MySQL).
+• You will collaborate with product designers and frontend teams to deliver core APIs.
+
+Qualifications:
+• 5+ years of experience in backend software engineering required.
+• Strong proficiency in distributed systems design, caching, and database indexing.
+• Bachelor's degree in Computer Science or equivalent practical experience.
+
+Benefits:
+• Comprehensive health insurance, 401(k) matching, and unlimited PTO.
+• Veloce Systems is an Equal Opportunity Employer.
+`;
+
+const appInstance = analyserApp();
+
+// Verify normal order
+appInstance.resumeMode = 'text';
+appInstance.resumeText = sampleResumeText;
+appInstance.jdMode = 'text';
+appInstance.jobDescription = sampleJdText;
+
+assert.strictEqual(appInstance.isSwappedDetected, false, 'Normal order must NOT be detected as swapped.');
+
+// Verify swapped order
+appInstance.resumeText = sampleJdText;
+appInstance.jobDescription = sampleResumeText;
+
+assert.strictEqual(appInstance.isSwappedDetected, true, 'Inverted order must be deterministically detected as swapped.');
+
+// Verify full state swap with files and extracted text
+const fakeResumeFile = { name: 'resume.pdf', size: 102400 };
+const fakeJdFile = { name: 'job_spec.txt', size: 4096 };
+
+appInstance.resumeMode = 'file';
+appInstance.file = fakeResumeFile;
+appInstance.resumeExtractedText = 'Extracted Resume Content';
+appInstance.resumeEditedText = 'Edited Resume Content';
+appInstance.resumeExtractionMeta = { wordCount: 150, pageCount: 1 };
+
+appInstance.jdMode = 'text';
+appInstance.jdFile = null;
+appInstance.jobDescription = sampleJdText;
+appInstance.jdExtractedText = '';
+appInstance.jdEditedText = '';
+appInstance.jdExtractionMeta = { wordCount: 0, pageCount: 0 };
+
+// Execute swapPanels
+appInstance.swapPanels();
+
+// Assert complete symmetrical state transfer
+assert.strictEqual(appInstance.resumeMode, 'text', 'Resume mode should now be text.');
+assert.strictEqual(appInstance.jdMode, 'file', 'JD mode should now be file.');
+assert.strictEqual(appInstance.file, null, 'Resume file should now be null.');
+assert.strictEqual(appInstance.jdFile, fakeResumeFile, 'JD file should now hold the original resume file.');
+assert.strictEqual(appInstance.resumeText, sampleJdText, 'Resume text should now contain the JD text.');
+assert.strictEqual(appInstance.jdExtractedText, 'Extracted Resume Content', 'JD extracted text should hold original resume extraction.');
+assert.strictEqual(appInstance.jdEditedText, 'Edited Resume Content', 'JD edited text should hold original resume edited text.');
+assert.strictEqual(appInstance.jdExtractionMeta.wordCount, 150, 'JD extraction metadata must hold swapped count.');
+
+console.log('  [PASS] Document orientation and full-state panel swap verified with 100% preservation.');
+
 console.log('\n=============================================================');
 console.log('ALL FRONTEND LOGIC & METRIC GUARD TESTS PASSED (100% SUCCESS)');
 console.log('=============================================================\n');

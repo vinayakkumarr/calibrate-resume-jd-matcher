@@ -296,6 +296,21 @@ if ($resumeTextContent !== null && areInputsIdentical($resumeTextContent, $jobDe
     exit;
 }
 
+// Guard against inverted document orientation (e.g. Job Description in Resume box & Resume in JD box)
+$forceOrientation = filter_var($_POST['force_orientation'] ?? false, FILTER_VALIDATE_BOOLEAN);
+if (!$forceOrientation && $resumeTextContent !== null) {
+    $orientationCheck = detectInputInversion($resumeTextContent, $jobDescription);
+    if ($orientationCheck['is_inverted']) {
+        http_response_code(422);
+        echo json_encode([
+            'error' => "The Resume and Job Description appear to be swapped. The Resume field contains job requisition details, while the Job Description field contains candidate employment history. Please swap your inputs before continuing.",
+            'code'  => 'INPUTS_SWAPPED',
+            'can_force' => true
+        ]);
+        exit;
+    }
+}
+
 // Persist resume artifact to storage
 $uuid = bin2hex(random_bytes(16));
 $uploadDir = __DIR__ . '/../../storage/uploads/';
