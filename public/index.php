@@ -9,7 +9,7 @@ if (PHP_SAPI !== 'cli') {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Calibrate — Engineered for Software, Data & IT Roles</title>
+  <title>Calibrate — Precision Alignment for Engineering & Tech Roles</title>
 
   <!-- Brand Favicon & Device Touch Icons (SVG Scalable) -->
   <link rel="icon" type="image/svg+xml" href="assets/brand/calibrate-favicon-32.svg?v=2">
@@ -18,8 +18,8 @@ if (PHP_SAPI !== 'cli') {
   <link rel="manifest" href="manifest.json">
 
   <!-- OpenGraph & Social Preview -->
-  <meta property="og:title" content="Calibrate — Engineered for Software, Data & IT Roles">
-  <meta property="og:description" content="Precision technical resume alignment, deterministic requirement scoring, and grounded achievement upgrades for Software, Data & IT roles.">
+  <meta property="og:title" content="Calibrate — Precision Alignment for Engineering & Tech Roles">
+  <meta property="og:description" content="Precision technical resume alignment, deterministic requirement scoring, and grounded achievement upgrades for Engineering & Tech roles.">
   <meta property="og:image" content="assets/brand/calibrate-hero-banner.svg">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:image" content="assets/brand/calibrate-hero-banner.svg">
@@ -89,7 +89,7 @@ if (PHP_SAPI !== 'cli') {
           </div>
         </a>
         <span class="hidden md:inline-block text-stone-300 mx-1 text-xs select-none">/</span>
-        <span class="hidden md:inline-block text-[11px] text-stone-500 font-mono tracking-wider">Engineered for Software, Data &amp; IT Roles.</span>
+        <span class="hidden md:inline-block text-[11px] text-stone-500 font-mono tracking-wider">Precision Alignment for Engineering &amp; Tech Roles</span>
       </div>
 
       <div class="flex items-center gap-5 text-xs">
@@ -1272,7 +1272,7 @@ if (PHP_SAPI !== 'cli') {
     <div class="flex items-center justify-center mb-1 select-none pointer-events-none" aria-hidden="true">
       <img src="assets/brand/calibrate-wordmark-light.svg" alt="Calibrate Logo" height="24" class="h-6 w-auto opacity-70 mx-auto select-none pointer-events-none" draggable="false">
     </div>
-    <p class="text-[11px] text-stone-500 font-medium">Calibrate calculates deterministic requirement and qualification coverage for Software, Data &amp; IT roles. It does not simulate proprietary ATS ranking algorithms or guarantee interview selection.</p>
+    <p class="text-[11px] text-stone-500 font-medium">Calibrate calculates deterministic requirement and qualification coverage for Engineering &amp; Tech roles. It does not simulate proprietary ATS ranking algorithms or guarantee interview selection.</p>
     <p class="text-[10.5px] text-stone-400">Privacy-conscious architecture: Uploaded documents, processing data, and generated assessments are handled according to configured environment procedures.</p>
   </footer>
 

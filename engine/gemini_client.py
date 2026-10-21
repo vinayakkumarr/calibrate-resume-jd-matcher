@@ -399,7 +399,7 @@ def extract_atomic_jd_targets(client: genai.Client, jd_text: str, conn=None) -> 
     if cached_targets:
         return cached_targets
 
-    prompt = f"""You are an expert technical talent architect and executive engineering evaluator specializing in Software, Data & IT roles.
+    prompt = f"""You are an expert technical talent architect and executive engineering evaluator specializing in Engineering & Tech roles.
 Decompose the Job Description into individual, atomic technical criteria across the 9 standardized domains covering the full career spectrum (Freshers/Juniors, Mid-Level, Senior/Staff/Principal Architects, and Engineering Leadership):
 
 STANDARDIZED 9-DOMAIN DECOMPOSITION RULES:
