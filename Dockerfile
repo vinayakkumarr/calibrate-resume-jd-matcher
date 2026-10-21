@@ -84,10 +84,12 @@ COPY . .
 RUN mkdir -p storage/uploads storage/logs \
     && chown -R www-data:www-data storage \
     && chmod -R 775 storage \
-    && chmod -R 755 engine
+    && chmod -R 755 engine \
+    && sed -i 's/\r$//' docker-entrypoint.sh \
+    && chmod +x docker-entrypoint.sh
 
 EXPOSE ${PORT}
 
-# Tini as PID 1 reaps background Python workers and prevents zombie accumulation
-ENTRYPOINT ["/usr/bin/tini", "--"]
+# Tini as PID 1 reaps background Python workers and supervises entrypoint
+ENTRYPOINT ["/usr/bin/tini", "--", "/var/www/html/docker-entrypoint.sh"]
 CMD ["apache2-foreground"]
