@@ -48,9 +48,10 @@ RUN echo "ServerTokens Prod\nServerSignature Off" > /etc/apache2/conf-available/
 </IfModule>" > /etc/apache2/conf-available/mpm_prefork_tuning.conf \
     && a2enconf security_hardening mpm_prefork_tuning
 
-# High-Performance Immutable OPcache & Production PHP Directives
+# Production PHP engine configuration, OPcache bytecode caching, and EGPCS exposure
 RUN cp "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini" \
-    && echo "upload_max_filesize = 12M\n\
+    && echo "variables_order = \"EGPCS\"\n\
+upload_max_filesize = 12M\n\
 post_max_size = 15M\n\
 memory_limit = 128M\n\
 max_execution_time = 60\n\
