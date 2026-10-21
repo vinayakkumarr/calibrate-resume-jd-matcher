@@ -265,9 +265,14 @@ function analyserApp() {
           method: 'POST',
           body: formData
         });
-        const data = await res.json();
+        let data = {};
+        try {
+          data = await res.json();
+        } catch (_) {
+          data = {};
+        }
         if (!res.ok || !data.success) {
-          throw new Error(data.error || 'Failed to extract text from document.');
+          throw new Error(data.error || `Document extraction failed (HTTP ${res.status}).`);
         }
 
         if (isResume) {
@@ -566,10 +571,15 @@ function analyserApp() {
           body: formData
         });
 
-        const data = await res.json();
+        let data = {};
+        try {
+          data = await res.json();
+        } catch (_) {
+          data = {};
+        }
 
         if (!res.ok) {
-          throw new Error(data.error || 'Server rejected scan request.');
+          throw new Error(data.error || `Server rejected scan request (HTTP ${res.status}). Your inputs were preserved.`);
         }
 
         this.scanUuid = data.uuid;
@@ -607,10 +617,15 @@ function analyserApp() {
               'X-Client-Token': this.getClientToken()
             }
           });
-          const data = await res.json();
+          let data = {};
+          try {
+            data = await res.json();
+          } catch (_) {
+            data = {};
+          }
 
           if (!res.ok) {
-            throw new Error(data.error || 'Status check failed.');
+            throw new Error(data.error || `Status check failed (HTTP ${res.status}).`);
           }
 
           // Reset network retry counter on successful poll response

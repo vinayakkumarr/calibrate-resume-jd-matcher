@@ -25,8 +25,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 // Fair-use extraction rate limiting
 $rawIp = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
 $isLocalhost = in_array($rawIp, ['127.0.0.1', '::1', 'localhost'], true);
-$appEnv = strtolower(trim((string)($_ENV['APP_ENV'] ?? 'development')));
-$forceRateLimit = filter_var($_ENV['FORCE_RATE_LIMIT'] ?? false, FILTER_VALIDATE_BOOLEAN);
+$appEnv = strtolower(trim((string)env('APP_ENV', 'development')));
+$forceRateLimit = filter_var(env('FORCE_RATE_LIMIT', 'false'), FILTER_VALIDATE_BOOLEAN);
 $isDev = ($appEnv === 'development' || $isLocalhost) && !$forceRateLimit;
 
 $clientToken = trim($_POST['client_token'] ?? $_SERVER['HTTP_X_CLIENT_TOKEN'] ?? '');
@@ -46,7 +46,7 @@ if (filter_var($rawIp, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
 }
 $ipSubnetHash = hash('sha256', (string)$subnet);
 
-$maxDailyExtractions = (int)($_ENV['MAX_DAILY_SCANS_PER_USER'] ?? 20) * 2;
+$maxDailyExtractions = (int)env('MAX_DAILY_SCANS_PER_USER', '20') * 2;
 if (!$isDev && isset($pdo)) {
     $rateStmt = $pdo->prepare("SELECT COUNT(*) FROM scans WHERE (client_token = ? OR ip_subnet = ?) AND created_at > NOW() - INTERVAL 1 DAY");
     $rateStmt->execute([$clientToken, $ipSubnetHash]);
@@ -71,7 +71,7 @@ if (!isset($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
 }
 
 $uploadedFile = $_FILES['file'];
-$maxSizeBytes = (int)($_ENV['MAX_FILE_SIZE_BYTES'] ?? (10 * 1024 * 1024));
+$maxSizeBytes = (int)env('MAX_FILE_SIZE_BYTES', (string)(10 * 1024 * 1024));
 
 // Validate file size
 if ($uploadedFile['size'] > $maxSizeBytes) {
@@ -88,13 +88,14 @@ $lowerName = strtolower($origName);
 $tmpPath = $uploadedFile['tmp_name'];
 
 // Resolve Python executable
-$pythonBin = $_ENV['PYTHON_BIN'] ?? 'python';
+$pythonBin = env('PYTHON_BIN', 'python');
 if ($pythonBin === 'python') {
-    $winVenv = realpath(__DIR__ . '/../../engine/venv/Scripts/python.exe');
-    $linVenv = realpath(__DIR__ . '/../../engine/venv/bin/python');
-    if ($winVenv && file_exists($winVenv)) {
+    $baseDir = dirname(__DIR__, 2);
+    $winVenv = $baseDir . '/engine/venv/Scripts/python.exe';
+    $linVenv = $baseDir . '/engine/venv/bin/python';
+    if (file_exists($winVenv)) {
         $pythonBin = $winVenv;
-    } elseif ($linVenv && file_exists($linVenv)) {
+    } elseif (file_exists($linVenv)) {
         $pythonBin = $linVenv;
     }
 }

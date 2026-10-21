@@ -20,69 +20,71 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 // Resolve environment and client network
 $rawIp = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
 $isLocalhost = in_array($rawIp, ['127.0.0.1', '::1', 'localhost'], true);
-$appEnv = strtolower(trim((string)($_ENV['APP_ENV'] ?? 'development')));
-$forceRateLimit = filter_var($_ENV['FORCE_RATE_LIMIT'] ?? false, FILTER_VALIDATE_BOOLEAN);
+$appEnv = strtolower(trim((string)env('APP_ENV', 'development')));
+$forceRateLimit = filter_var(env('FORCE_RATE_LIMIT', 'false'), FILTER_VALIDATE_BOOLEAN);
 $isDev = ($appEnv === 'development' || $isLocalhost) && !$forceRateLimit;
 
-// Enforce global system daily scan quota (bypassed in local development)
-$systemDailyCap = (int)($_ENV['SYSTEM_DAILY_SCAN_CAP'] ?? 1400);
-if (!$isDev) {
-    $globalStmt = $pdo->query("SELECT COUNT(*) FROM scans WHERE created_at > NOW() - INTERVAL 1 DAY");
-    if ((int)$globalStmt->fetchColumn() >= $systemDailyCap) {
-        http_response_code(429);
-        echo json_encode(['error' => sprintf('Daily community capacity reached (%d/%d). Please try again tomorrow.', $systemDailyCap, $systemDailyCap)]);
-        exit;
+try {
+    // Enforce global system daily scan quota (bypassed in local development)
+    $systemDailyCap = (int)env('SYSTEM_DAILY_SCAN_CAP', '1400');
+    if (!$isDev) {
+        $globalStmt = $pdo->query("SELECT COUNT(*) FROM scans WHERE created_at > NOW() - INTERVAL 1 DAY");
+        if ((int)$globalStmt->fetchColumn() >= $systemDailyCap) {
+            http_response_code(429);
+            echo json_encode(['error' => sprintf('Daily community capacity reached (%d/%d). Please try again tomorrow.', $systemDailyCap, $systemDailyCap)]);
+            exit;
+        }
     }
-}
 
-// Client token and subnet rate limiting (bypassed in local development)
-$maxDailyPerUser = (int)($_ENV['MAX_DAILY_SCANS_PER_USER'] ?? 20);
-$clientToken = trim($_POST['client_token'] ?? '');
-if (empty($clientToken)) {
-    $clientToken = bin2hex(random_bytes(16));
-}
+    // Client token and subnet rate limiting (bypassed in local development)
+    $maxDailyPerUser = (int)env('MAX_DAILY_SCANS_PER_USER', '20');
+    $clientToken = trim($_POST['client_token'] ?? '');
+    if (empty($clientToken)) {
+        $clientToken = bin2hex(random_bytes(16));
+    }
 
-if (filter_var($rawIp, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
-    $packed = inet_pton($rawIp);
-    if ($packed !== false && strlen($packed) === 16) {
-        $subnet = inet_ntop(substr($packed, 0, 8) . str_repeat("\0", 8));
+    if (filter_var($rawIp, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+        $packed = inet_pton($rawIp);
+        if ($packed !== false && strlen($packed) === 16) {
+            $subnet = inet_ntop(substr($packed, 0, 8) . str_repeat("\0", 8));
+        } else {
+            $subnet = $rawIp;
+        }
     } else {
-        $subnet = $rawIp;
+        $subnet = preg_replace('/\.\d+$/', '.0', $rawIp);
     }
-} else {
-    $subnet = preg_replace('/\.\d+$/', '.0', $rawIp);
-}
-$ipSubnetHash = hash('sha256', (string)$subnet);
+    $ipSubnetHash = hash('sha256', (string)$subnet);
 
-if (!$isDev) {
-    $rateStmt = $pdo->prepare("SELECT COUNT(*) FROM scans WHERE (client_token = ? OR ip_subnet = ?) AND created_at > NOW() - INTERVAL 1 DAY");
-    $rateStmt->execute([$clientToken, $ipSubnetHash]);
-    if ((int)$rateStmt->fetchColumn() >= $maxDailyPerUser) {
-        http_response_code(429);
-        echo json_encode(['error' => sprintf('Daily free limit reached (%d/%d scans). Limit resets 24 hours after your first scan.', $maxDailyPerUser, $maxDailyPerUser)]);
-        exit;
+    if (!$isDev) {
+        $rateStmt = $pdo->prepare("SELECT COUNT(*) FROM scans WHERE (client_token = ? OR ip_subnet = ?) AND created_at > NOW() - INTERVAL 1 DAY");
+        $rateStmt->execute([$clientToken, $ipSubnetHash]);
+        if ((int)$rateStmt->fetchColumn() >= $maxDailyPerUser) {
+            http_response_code(429);
+            echo json_encode(['error' => sprintf('Daily free limit reached (%d/%d scans). Limit resets 24 hours after your first scan.', $maxDailyPerUser, $maxDailyPerUser)]);
+            exit;
+        }
     }
-}
 
-// Resolve Python executable for parser and analyzer processes
-$pythonBin = $_ENV['PYTHON_BIN'] ?? 'python';
-if ($pythonBin === 'python') {
-    $winVenv = realpath(__DIR__ . '/../../engine/venv/Scripts/python.exe');
-    $linVenv = realpath(__DIR__ . '/../../engine/venv/bin/python');
-    if ($winVenv && file_exists($winVenv)) {
-        $pythonBin = $winVenv;
-    } elseif ($linVenv && file_exists($linVenv)) {
-        $pythonBin = $linVenv;
+    // Resolve Python executable for parser and analyzer processes
+    $pythonBin = env('PYTHON_BIN', 'python');
+    if ($pythonBin === 'python') {
+        $baseDir = dirname(__DIR__, 2);
+        $winVenv = $baseDir . '/engine/venv/Scripts/python.exe';
+        $linVenv = $baseDir . '/engine/venv/bin/python';
+        if (file_exists($winVenv)) {
+            $pythonBin = $winVenv;
+        } elseif (file_exists($linVenv)) {
+            $pythonBin = $linVenv;
+        }
     }
-}
 
-require_once __DIR__ . '/validation_helpers.php';
+    require_once __DIR__ . '/validation_helpers.php';
 
-// Job description ingestion and validation
-$maxSizeBytes = (int)($_ENV['MAX_FILE_SIZE_BYTES'] ?? (10 * 1024 * 1024));
-$minInputChars = (int)($_ENV['MIN_INPUT_CHARS'] ?? 80);
-$maxResumeChars = (int)($_ENV['MAX_RESUME_CHARS'] ?? 25000);
-$maxJdChars = (int)($_ENV['MAX_JD_CHARS'] ?? 15000);
+    // Job description ingestion and validation
+    $maxSizeBytes = (int)env('MAX_FILE_SIZE_BYTES', (string)(10 * 1024 * 1024));
+    $minInputChars = (int)env('MIN_INPUT_CHARS', '80');
+    $maxResumeChars = (int)env('MAX_RESUME_CHARS', '25000');
+    $maxJdChars = (int)env('MAX_JD_CHARS', '15000');
 $jobDescription = '';
 $jdMode = trim((string)($_POST['jd_mode'] ?? ''));
 
@@ -385,3 +387,11 @@ echo json_encode([
     'status'       => 'pending',
     'message'      => 'Resume accepted. Processing started in background.'
 ]);
+} catch (\Throwable $e) {
+    error_log(sprintf('[SCAN_ERROR] %s in %s:%d', $e->getMessage(), $e->getFile(), $e->getLine()));
+    http_response_code(500);
+    $debug = filter_var(env('APP_DEBUG', 'false'), FILTER_VALIDATE_BOOLEAN);
+    $message = $debug ? $e->getMessage() : 'An unexpected server error occurred during scan processing. Please try again.';
+    echo json_encode(['error' => $message]);
+    exit;
+}
