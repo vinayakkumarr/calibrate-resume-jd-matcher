@@ -19,6 +19,7 @@
   let width = 0;
   let height = 0;
   let offsetX = 0;
+  let offsetY = 0;
 
   // Track active cells: key -> { col, row, x, y, enterTime, exitTime, exitAlpha }
   const activeCells = new Map();
@@ -42,9 +43,15 @@
   }
 
   function calculateGridOffset() {
-    const centerX = width / 2;
+    // Synchronize horizontal center with document layout viewport (matches CSS background-position: center on body)
+    const clientW = document.documentElement.clientWidth || (document.body ? document.body.clientWidth : width);
+    const centerX = clientW / 2;
     const baseOffset = (centerX - (GRID_SIZE / 2)) % GRID_SIZE;
-    offsetX = (baseOffset + GRID_SIZE) % GRID_SIZE;
+    const scrollX = window.scrollX || window.pageXOffset || 0;
+    const scrollY = window.scrollY || window.pageYOffset || 0;
+
+    offsetX = (((baseOffset - scrollX) % GRID_SIZE) + GRID_SIZE) % GRID_SIZE;
+    offsetY = (((-scrollY) % GRID_SIZE) + GRID_SIZE) % GRID_SIZE;
   }
 
   function resizeCanvas() {
@@ -91,13 +98,13 @@
     const y = e.clientY;
 
     const col = Math.floor((x - offsetX) / GRID_SIZE);
-    const row = Math.floor(y / GRID_SIZE);
+    const row = Math.floor((y - offsetY) / GRID_SIZE);
     const key = `${col},${row}`;
     const cellX = offsetX + col * GRID_SIZE;
-    const cellY = row * GRID_SIZE;
+    const cellY = offsetY + row * GRID_SIZE;
 
     // Check bounds
-    if (cellX + GRID_SIZE < 0 || cellX > width || cellY < 0 || cellY > height) {
+    if (cellX + GRID_SIZE < 0 || cellX > width || cellY + GRID_SIZE < 0 || cellY > height) {
       handlePointerLeave();
       return;
     }
@@ -125,8 +132,6 @@
         activeCells.set(key, {
           col,
           row,
-          x: cellX,
-          y: cellY,
           enterTime: now,
           exitTime: null,
           exitAlpha: 1
@@ -188,14 +193,18 @@
         const fillAlpha = alpha * HOVER_ALPHA_FILL;
         const strokeAlpha = alpha * HOVER_ALPHA_STROKE;
 
+        // Derive dynamic viewport coordinates anchored to active offset
+        const drawX = offsetX + cell.col * GRID_SIZE;
+        const drawY = offsetY + cell.row * GRID_SIZE;
+
         // Brand accent fill (#EA580C -> 234, 88, 12)
         ctx.fillStyle = `rgba(234, 88, 12, ${fillAlpha.toFixed(4)})`;
-        ctx.fillRect(cell.x, cell.y, GRID_SIZE, GRID_SIZE);
+        ctx.fillRect(drawX, drawY, GRID_SIZE, GRID_SIZE);
 
-        // Border stroke highlight
+        // Border stroke highlight snapped to exact 1px grid line boundaries
         ctx.strokeStyle = `rgba(234, 88, 12, ${strokeAlpha.toFixed(4)})`;
         ctx.lineWidth = 1;
-        ctx.strokeRect(cell.x + 0.5, cell.y + 0.5, GRID_SIZE - 1, GRID_SIZE - 1);
+        ctx.strokeRect(drawX + 0.5, drawY + 0.5, GRID_SIZE - 1, GRID_SIZE - 1);
       }
     });
 
@@ -206,12 +215,21 @@
     }
   }
 
+  function handleScroll() {
+    if (!isHomePage()) return;
+    calculateGridOffset();
+    if (activeCells.size > 0 && !animationFrameId) {
+      animationFrameId = requestAnimationFrame(renderLoop);
+    }
+  }
+
   function init() {
     canvas = document.getElementById('gridCanvas');
     if (!canvas) return;
 
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas, { passive: true });
+    window.addEventListener('scroll', handleScroll, { passive: true });
     window.addEventListener('pointermove', handlePointerMove, { passive: true });
     document.addEventListener('pointerleave', handlePointerLeave, { passive: true });
 
