@@ -29,14 +29,21 @@ from scorer import calculate_deterministic_scores
 
 
 def get_db_connection():
-    return mysql.connector.connect(
-        host=os.getenv("DB_HOST", "127.0.0.1"),
-        port=int(os.getenv("DB_PORT", 3306)),
-        database=os.getenv("DB_NAME", "jd_analyser"),
-        user=os.getenv("DB_USER", "root"),
-        password=os.getenv("DB_PASS", ""),
-        autocommit=False
-    )
+    conn_kwargs = {
+        "host": os.getenv("DB_HOST", "127.0.0.1"),
+        "port": int(os.getenv("DB_PORT", 3306)),
+        "database": os.getenv("DB_NAME", "jd_analyser"),
+        "user": os.getenv("DB_USER", "root"),
+        "password": os.getenv("DB_PASS", ""),
+        "autocommit": False
+    }
+    if os.getenv("DB_SSL", "false").lower() in ("true", "1", "yes"):
+        ca_path = os.getenv("DB_SSL_CA", "/etc/ssl/certs/ca-certificates.crt")
+        if os.path.exists(ca_path):
+            conn_kwargs["ssl_ca"] = ca_path
+        else:
+            conn_kwargs["ssl_disabled"] = False
+    return mysql.connector.connect(**conn_kwargs)
 
 def sanitize_pii(text: str) -> str:
     """Scrubs email addresses and phone numbers from error traces to protect candidate privacy."""

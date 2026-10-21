@@ -40,6 +40,17 @@ $options = [
     PDO::ATTR_EMULATE_PREPARES   => false,
 ];
 
+// Optional SSL/TLS encryption for Cloud MySQL (e.g. TiDB Serverless, Aiven)
+$useSsl = filter_var($_ENV['DB_SSL'] ?? false, FILTER_VALIDATE_BOOLEAN);
+if ($useSsl) {
+    $caPath = $_ENV['DB_SSL_CA'] ?? '/etc/ssl/certs/ca-certificates.crt';
+    if (file_exists($caPath)) {
+        $options[PDO::MYSQL_ATTR_SSL_CA] = $caPath;
+    } else {
+        $options[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = false;
+    }
+}
+
 try {
     $pdo = new PDO($dsn, $user, $pass, $options);
 } catch (PDOException $e) {
