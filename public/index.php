@@ -76,17 +76,10 @@ if (PHP_SAPI !== 'cli') {
 
   <!-- Navigation Header -->
   <header class="header-editorial sticky top-0 z-30 no-print print:hidden">
-    <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <a href="/" class="flex items-center gap-2.5 transition-opacity hover:opacity-90" aria-label="Calibrate Home">
-          <!-- Mobile Monogram (< sm) -->
-          <div class="sm:hidden flex items-center">
-            <img src="assets/brand/calibrate-symbol-mark-light.svg" alt="Calibrate Monogram" width="32" height="32" class="w-8 h-8 rounded-lg shrink-0">
-          </div>
-          <!-- Desktop Wordmark (sm+) -->
-          <div class="hidden sm:flex items-center">
-            <img src="assets/brand/calibrate-wordmark-light.svg" alt="Calibrate Logo" height="32" class="h-8 w-auto">
-          </div>
+        <a href="/" class="flex items-center transition-opacity hover:opacity-90" aria-label="Calibrate Home">
+          <img src="assets/brand/calibrate-wordmark-light.svg" alt="Calibrate" width="105" height="32" class="h-7 sm:h-8 w-auto shrink-0 select-none" loading="eager" decoding="async">
         </a>
         <span class="hidden md:inline-block text-stone-300 mx-1 text-xs select-none">/</span>
         <span class="hidden md:inline-block text-[11px] text-stone-500 font-mono tracking-wider">Precision Alignment for Engineering &amp; Tech Roles</span>
@@ -102,7 +95,7 @@ if (PHP_SAPI !== 'cli') {
   </header>
 
   <!-- Main Workstation -->
-  <main class="flex-1 max-w-6xl w-full mx-auto px-6 py-10 flex flex-col justify-center relative z-10">
+  <main class="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-8 sm:py-10 flex flex-col justify-center relative z-10">
     
     <!-- Upload and Ingestion View -->
     <div x-show="view === 'upload'" class="space-y-10 max-w-5xl mx-auto w-full">
@@ -149,7 +142,7 @@ if (PHP_SAPI !== 'cli') {
           <!-- Pane 1: Candidate Resume -->
           <div class="stationery-card stationery-workstation p-5 sm:p-6 rounded-xl flex flex-col justify-between">
             <div>
-              <div class="flex justify-between items-center gap-2 mb-3">
+              <div class="flex flex-wrap sm:flex-nowrap justify-between items-center gap-2 mb-3">
                 <div class="flex items-baseline gap-2.5">
                   <label class="block text-base font-semibold text-stone-900 tracking-tight">Resume</label>
                   <span x-show="resumeMode === 'file'" class="text-[11px] text-stone-400 font-mono">PDF, TXT up to 10MB</span>
@@ -364,7 +357,7 @@ if (PHP_SAPI !== 'cli') {
           <!-- Pane 2: Target Job Description -->
           <div class="stationery-card stationery-workstation p-5 sm:p-6 rounded-xl flex flex-col justify-between">
             <div>
-              <div class="flex justify-between items-center gap-2 mb-3">
+              <div class="flex flex-wrap sm:flex-nowrap justify-between items-center gap-2 mb-3">
                 <div class="flex items-baseline gap-2.5">
                   <label class="block text-base font-semibold text-stone-900 tracking-tight">Job Description</label>
                   <span x-show="jdMode === 'file'" class="text-[11px] text-stone-400 font-mono">PDF, TXT up to 10MB</span>
@@ -393,7 +386,7 @@ if (PHP_SAPI !== 'cli') {
                    x-transition:enter-start="opacity-0 translate-y-1"
                    x-transition:enter-end="opacity-100 translate-y-0">
                 <textarea id="jd_textarea" x-ref="jdTextarea" x-model="jobDescription" minlength="80" maxlength="15000"
-                  placeholder="Paste the target job description here (e.g. Software, Data, DevOps/SRE, Security, Systems, or IT Engineering requirements)..."
+                  placeholder="Paste the target job description here (e.g. Software, Data, DevOps/SRE, Security, Systems, Cloud, or Modern Tech requirements)..."
                   class="w-full min-h-[240px] max-h-[680px] rounded-lg border border-[#E8E6DF] p-3.5 sm:p-4 text-sm focus:outline-none transition-colors resize-y text-stone-900 placeholder-stone-400 bg-stone-50/30 leading-relaxed textarea-canvas"></textarea>
               </div>
 
@@ -845,21 +838,25 @@ if (PHP_SAPI !== 'cli') {
           <!-- Pillar 2 Filter Controls Bar -->
           <div class="stationery-card p-3 rounded-xl space-y-2.5 border border-[#E8E6DF] shadow-xs sticky top-20 z-10 bg-[#FAF9F6]/95 backdrop-blur-sm no-print print:hidden">
             <!-- Filter Tabs with Live Dynamic Counts -->
-            <div class="flex items-center gap-1 border-b border-[#E8E6DF] pb-2 text-xs font-medium">
+            <div class="flex items-center gap-1 border-b border-[#E8E6DF] pb-2 text-xs font-medium overflow-x-auto no-scrollbar">
               <button @click="filterTab = 'all'" 
-                      :class="filterTab === 'all' ? 'bg-stone-900 text-stone-50 px-2.5 py-1 rounded shadow-xs' : 'text-stone-500 hover:text-stone-900 px-2.5 py-1'">
+                      :class="filterTab === 'all' ? 'bg-stone-900 text-stone-50 px-2.5 py-1 rounded shadow-xs' : 'text-stone-500 hover:text-stone-900 px-2.5 py-1'"
+                      class="shrink-0 whitespace-nowrap">
                 All (<span x-text="requirementsCounts.total"></span>)
               </button>
               <button @click="filterTab = 'matched'" 
-                      :class="filterTab === 'matched' ? 'bg-stone-900 text-stone-50 px-2.5 py-1 rounded shadow-xs' : 'text-stone-500 hover:text-stone-900 px-2.5 py-1'">
+                      :class="filterTab === 'matched' ? 'bg-stone-900 text-stone-50 px-2.5 py-1 rounded shadow-xs' : 'text-stone-500 hover:text-stone-900 px-2.5 py-1'"
+                      class="shrink-0 whitespace-nowrap">
                 Matched (<span x-text="requirementsCounts.matched"></span>)
               </button>
               <button @click="filterTab = 'weak'" 
-                      :class="filterTab === 'weak' ? 'bg-stone-900 text-stone-50 px-2.5 py-1 rounded shadow-xs' : 'text-stone-500 hover:text-stone-900 px-2.5 py-1'">
+                      :class="filterTab === 'weak' ? 'bg-stone-900 text-stone-50 px-2.5 py-1 rounded shadow-xs' : 'text-stone-500 hover:text-stone-900 px-2.5 py-1'"
+                      class="shrink-0 whitespace-nowrap">
                 Partial (<span x-text="requirementsCounts.weak"></span>)
               </button>
               <button @click="filterTab = 'missing'" 
-                      :class="filterTab === 'missing' ? 'bg-stone-900 text-stone-50 px-2.5 py-1 rounded shadow-xs' : 'text-stone-500 hover:text-stone-900 px-2.5 py-1'">
+                      :class="filterTab === 'missing' ? 'bg-stone-900 text-stone-50 px-2.5 py-1 rounded shadow-xs' : 'text-stone-500 hover:text-stone-900 px-2.5 py-1'"
+                      class="shrink-0 whitespace-nowrap">
                 Missing (<span x-text="requirementsCounts.missing"></span>)
               </button>
             </div>
@@ -1268,7 +1265,7 @@ if (PHP_SAPI !== 'cli') {
   </main>
 
   <!-- Footer -->
-  <footer class="footer-editorial py-10 text-center text-xs text-stone-400 space-y-2 relative z-10 no-print print:hidden">
+  <footer class="footer-editorial py-10 px-4 sm:px-6 text-center text-xs text-stone-400 space-y-2 relative z-10 no-print print:hidden">
     <div class="flex items-center justify-center mb-1 select-none pointer-events-none" aria-hidden="true">
       <img src="assets/brand/calibrate-wordmark-light.svg" alt="Calibrate Logo" height="24" class="h-6 w-auto opacity-70 mx-auto select-none pointer-events-none" draggable="false">
     </div>
